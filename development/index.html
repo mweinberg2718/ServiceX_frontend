@@ -158,43 +158,39 @@ In particular, you’ll need your CERN grid certificate to communicate with Ruci
 default values in <code>servicex/values.yaml</code>. These values can be overridden via a separate yaml
 file. For example, to run on SSL-RIVER,</p>
 <pre><code>cat &lt;&lt;EOF &gt; river-values.yaml
-postgres:
-    enabled: true
 app:
-    tag: develop
-    pullPolicy: Always
+  auth: true
+  adminUser: admin
+  adminPassword: eto2ipiis1
+  ingress:
+    enabled: true
 didFinder:
-    tag: develop
-    pullPolicy: Always
-preflight:
-    tag: develop
-    pullPolicy: Always
+  tag: v1.0-rc.1
+  pullPolicy: Always
 codeGen:
-    image: sslhep/servicex_code_gen_func_adl_xaod
-    tag: develop
-    pullPolicy: Always
-x509Secrets:
-    tag: 90_cms_rucio
-    pullPolicy: IfNotPresent
-gridAccount:
-usercert: |+
-    -----BEGIN CERTIFICATE-----
-    -----END CERTIFICATE-----
-userkey: |+
-    -----BEGIN ENCRYPTED PRIVATE KEY-----
-    -----END ENCRYPTED PRIVATE KEY-----
-gridPassword:
+  # image: sslhep/servicex_code_gen_func_adl_uproot
+  image: sslhep/servicex_code_gen_func_adl_xaod
+rabbitmq:
+  service:
+    type: NodePort
+    nodePort: 30672
+minio:
+  ingress:
+    enabled: true
+    hosts:
+    - "servicex-minio.uc.ssl-hep.org"
+gridAccount: bgalewsk
 EOF
 </code></pre>
 </li>
 <li>
 <p>With the appropriate values, it is now possible to deploy ServiceX via the Helm chart:</p>
-<pre><code>helm install my-xaod -f river-values.yaml servicex
+<pre><code>helm install -f river-values.yaml --version v1.0.0-rc.1 rc1-xaod ssl-hep/servicex
 </code></pre>
 </li>
 <li>
-<p>Initial deployment is typically rapid, with RabbitMQ requiring about half a minute to complete
-its initialization. After this all the pods of the new deployment should be ready. If you check the
+<p>Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to complete its
+initialization. After this all the pods of the new deployment should be ready. If you check the
 status of the pods via</p>
 <pre><code>kubectl get pods
 </code></pre>
