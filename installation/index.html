@@ -118,16 +118,45 @@
 instance of ServiceX (as opposed to setting up your own instance) consists in two parts: getting
 authenticated in the system by an administrator and installing the appropriate frontend library.</p>
 <h2 id="getting-authenticated">Getting authenticated</h2>
-<p>Go to the website <a href="http://public-servicex.uc.ssl-hep.org">here</a> and do the stuff [put in name,
-affiliation, username, password, etc.] and click the button to be added as a new user. Once you’re
-authenticated by an administrator your account will have access to ServiceX, and you’ll be able to
-put in transform requests.</p>
+<p>There are two instances of ServiceX, one to transform xAOD input files and one to transform flat
+ntuples, and you must be separately authenticated to each in order to use them. You can go to the
+<a href="http://rc1-xaod-servicex.uc.ssl-hep.org/">xAOD registration</a> or the
+<a href="http://rc1-uproot-servicex.uc.ssl-hep.org/">Uproot registration</a> and put in the username and
+password for your requested account. In these early days the ServiceX admins will seek to
+personally accept pending accounts, so once you've registered send a message to the admins (Ben
+Galewsky or Marc Weinberg, e.g. via Slack) and they will authorize any pending requests. Once
+you’re authenticated by an administrator your account will have access to ServiceX, and you’ll be
+able to put in transform requests.</p>
 <h2 id="installing-the-frontend-python-library">Installing the frontend Python library</h2>
-<p>The documentation for the ServiceX frontend is shown <a href="https://pypi.org/project/servicex/1.0.0b3/">here</a>. To interact with ServiceX via the frontend library you’ll need an environment running Python 3.7 or later, and you’ll need to connect to the central ServiceX endpoint:</p>
-<pre><code>pip install servicex==1.0.0b3
-servicex_endpoint = 'http://xaod-servicex-app.servicex:8000/servicex'
+<p>The documentation for the ServiceX frontend is shown
+<a href="https://pypi.org/project/servicex/1.0.0b3/">here</a>. It's also useful to employ functions from the
+func-adl libraries (<a href="https://pypi.org/project/func-adl-xAOD/">for xAOD</a> or
+<a href="https://pypi.org/project/func-adl-uproot/">Uproot</a>). To interact with ServiceX via the frontend
+library you’ll need an environment running Python 3.7 or later:</p>
+<pre><code>pip install servicex==2.0.0b6
+pip install func-adl-xAOD==1.1.0b4
+python
 </code></pre>
-<p>This endpoint will be used to submit transformation requests to the service.</p>
+<p>After the prompt you can import the libraries and make a request using your registered username and
+password.</p>
+<pre><code>import servicex
+import func_adl_xAOD
+dataset = 'mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00'
+sx_endpoint = 'http://rc1-xaod-servicex.uc.ssl-hep.org'
+minio_endpoint = 'servicex-minio.uc.ssl-hep.org'
+ds = servicex.ServiceXDataset(
+    dataset,
+    servicex.ServiceXAdaptor(sx_endpoint, username='mweinberg', password='rightfoot1'),
+    servicex.MinioAdaptor(minio_endpoint)
+    )
+f_ds = func_adl_xAOD.ServiceXDatasetSource(ds)
+r = f_ds \
+    .SelectMany('lambda e: e.Jets("AntiKt4EMTopoJets")') \
+    .Select('lambda j: j.pt()/1000.0') \
+    .AsPandasDF('JetPt') \
+    .value()
+print(r)
+</code></pre>
               
             </div>
           </div>

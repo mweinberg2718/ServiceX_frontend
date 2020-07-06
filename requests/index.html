@@ -133,18 +133,35 @@ query designed to extract the four-momenta of the Electron collection in some da
 electrons in an ATLAS xAOD file via</p>
 <pre><code>import servicex
 dataset = ‘mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00’
-r = servicex.get_data(query, dataset, servicex_endpoint=servicex_endpoint)
+sx_endpoint = 'http://rc1-xaod-servicex.uc.ssl-hep.org'
+minio_endpoint = 'servicex-minio.uc.ssl-hep.org'
+ds = servicex.ServiceXDataset(
+    dataset,
+    servicex.ServiceXAdaptor(sx_endpoint, username='mweinberg', password='XXXXXXXXX'),
+    servicex.MinioAdaptor(minio_endpoint)
+    )
+r = servicex.get_data_pandas_df(my_query)
 print(r)
 </code></pre>
 <p>This queries ServiceX for the specified dataset, extracts the requested columns, and after about
 1--2 minutes, prints a data frame with 4 columns (one for each of the variables).</p>
 <p>A badly formatted query, or a problem with the file in the backend, will cause an exception to be
 thrown.</p>
+<p>For all but the simplest single-column requests, creating a Qastle query as input can be quite
+cumbersome. <code>func_adl</code> provides additional libraries to construct queries. For example</p>
+<pre><code>import func_adl_xAOD
+f_ds = func_adl_xAOD.ServiceXDatasetSource(ds)
+r = f_ds \
+    .SelectMany('lambda e: e.Jets("AntiKt4EMTopoJets")') \
+    .Select('lambda j: j.pt()/1000.0') \
+    .AsPandasDF('JetPt') \
+    .value()
+print(r)
+</code></pre>
 <h2 id="creating-a-request-via-hep_tables">Creating a request via hep_tables</h2>
-<p>For all but the simplest single-column requests, creating a Qastle query as input for <code>func_adl</code>
-can be quite cumbersome. Another tool that can be used to make these requests without the hassle of
-writing a query by hand is <a href="https://gordonwatts.github.io/hep_tables_docs/intro">hep_tables</a>. This
-can (soon) be installed via pip:</p>
+<p>Another tool that can be used to make these requests is
+<a href="https://gordonwatts.github.io/hep_tables_docs/intro">hep_tables</a>. This can (soon) be installed via
+pip:</p>
 <pre><code>pip install hep_tables
 </code></pre>
 <p>As a simple example of their use, we can make a plot of the electron transverse momenta. First we
